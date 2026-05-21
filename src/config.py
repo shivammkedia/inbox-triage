@@ -6,7 +6,7 @@ load_dotenv()
 GROQ_API_KEY        = os.environ["GROQ_API_KEY"]
 OPENROUTER_API_KEY  = os.getenv("OPENROUTER_API_KEY", "")
 
-CLASSIFIER_MODEL    = os.getenv("CLASSIFIER_MODEL", "llama-3.1-8b-instant")
+CLASSIFIER_MODEL    = os.getenv("CLASSIFIER_MODEL", "llama-3.3-70b-versatile")
 DRAFTER_MODEL       = os.getenv("DRAFTER_MODEL", "llama-3.3-70b-versatile")
 
 GMAIL_CLIENT_ID     = os.environ["GMAIL_CLIENT_ID"]
