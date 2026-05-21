@@ -72,6 +72,42 @@ The whole system is dormant 99% of the time. Every 15 min, GitHub spins up a run
 
 ---
 
+## Why not just use n8n or Make?
+
+Fair question — and for most automations, you should. n8n and Make are excellent **visual plumbing for deterministic API calls**. If your unit of work is "if this then that," they win on time-to-first-workflow and integration coverage.
+
+This project competes on a different axis: **trust primitives for agentic systems**. When the unit of work is "an LLM decides what to do, and a human must approve before irreversible action," workflow builders hit walls they can't retrofit without rewriting their core.
+
+| Capability | n8n / Make | This project |
+|---|---|---|
+| **Capability scoping by tool** | All-or-nothing per credential. Gmail node can send, delete, anything | OAuth scope `gmail.modify` enforces "draft, never send" at the API boundary. A hallucinated tool call literally cannot send. |
+| **Dry-run mode** | Test executions exist, but no flag that classifies and logs without acting on real data | Single env var flips observe-vs-act. Same code path, same log rows. |
+| **Audit log for compliance** | Execution history per workflow, retention-limited, not designed for export | Append-only Postgres with model, tokens, latency, full I/O payloads — exportable for SOC2 / auditor review. |
+| **Idempotency** | You implement it yourself per workflow | `(email_id, step)` unique index — re-runs are no-ops by construction. |
+| **Action risk tiers** | Doesn't exist — every node is just a node | Designed to grow: read = free, reversible-write = log, irreversible = approval required. |
+| **Replay against a different model** | Can re-run, but can't swap models and see what would have happened | Audit log captures full input → swap model, replay, compare. Foundation for safe agent updates. |
+| **Where the IP lives** | Workflow JSON, locked in the platform | Code + schema in your repo, portable to any infra. |
+
+### Different buyers
+
+- **n8n / Make buyer**: a marketing ops lead who wants to glue HubSpot to Slack.
+- **This buyer**: a CTO whose CFO is asking *"what happens when the AI sends a wire transfer to the wrong account?"*
+
+The CFO question is the one this project answers. Workflow builders don't try to.
+
+### When n8n / Make win
+
+You're not running an LLM agent — just gluing APIs. You need a visual builder for non-devs. The actions are low-risk (Slack pings, spreadsheet updates). You don't need an exportable audit trail. Use them — they're great at this.
+
+### When this approach wins
+
+- The AI takes actions on your behalf (email, CRM, payments, contracts) and the cost of "wrong" is real.
+- Compliance asks *"show me every decision the AI made in Q3"* and you need a SQL answer, not a workflow execution log.
+- You want to pilot autonomously but observe for two weeks first — `DRY_RUN=true` runs the same code, takes no action, produces a full audit.
+- You're extending the same trust primitives to multiple workflows (inbox triage → CRM hygiene → vendor renewals → AR collections) and don't want to rebuild the safety layer per workflow.
+
+---
+
 ## Stack
 
 | Layer | Choice | Why |
